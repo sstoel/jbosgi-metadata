@@ -26,7 +26,7 @@
     <parent>
         <groupId>org.jboss.osgi</groupId>
         <artifactId>jbosgi-parent</artifactId>
-        <version>4.2.0</version>
+        <version>4.3.0</version>
     </parent>
 
     <name>JBossOSGi Metadata</name>
@@ -34,7 +34,7 @@
     <artifactId>jbosgi-metadata</artifactId>
     <packaging>jar</packaging>
 
-    <version>7.2.0.Final</version>
+    <version>7.3.0.Final</version>
 
     <!-- Source -->
     <scm>
