@@ -55,6 +55,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -123,7 +124,14 @@ public abstract class AbstractOSGiMetaData implements OSGiMetaData {
 
     @Override
     public List<String> getBundleClassPath() {
-        return get(BUNDLE_CLASSPATH, STRING_LIST_VC);
+        // White space around the entries of the bundle class path is not significant
+        List<String> entries = get(BUNDLE_CLASSPATH, STRING_LIST_VC);
+        if (entries == null)
+            return null;
+        List<String> result = new ArrayList<String>(entries.size());
+        for (String entry : entries)
+            result.add(entry.trim());
+        return result;
     }
 
     @Override
