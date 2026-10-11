@@ -151,7 +151,8 @@ public final class OSGiMetaDataBuilder {
             if (manifestVersion == 2 && symbolicName == null)
                 throw new BundleException("Cannot obtain Bundle-SymbolicName");
         } catch (RuntimeException ex) {
-            throw new BundleException("Invalid OSGi metadata", ex);
+            // A header that cannot be parsed
+            throw new BundleException("Invalid OSGi metadata", BundleException.MANIFEST_ERROR, ex);
         }
     }
 
