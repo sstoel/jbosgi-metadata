@@ -213,7 +213,7 @@ public final class OSGiMetaDataBuilder {
 
     public OSGiMetaDataBuilder addExportPackages(String... packages) {
         for (String aux : packages) {
-            addEntry(exportPackages, aux);
+            addExportEntry(aux);
         }
         return this;
     }
@@ -271,6 +271,17 @@ public final class OSGiMetaDataBuilder {
     }
 
     // Strip attributes/directives to avoid duplicates
+    // A package can be exported more than once, with a different version or with different attributes
+    private void addExportEntry(String entry) {
+        if (exportPackages.containsValue(entry)) {
+            LOGGER.fine("Ignore duplicate entry: " + entry);
+        } else {
+            int index = entry.indexOf(";");
+            String key = index > 0 ? entry.substring(0, index) : entry;
+            exportPackages.put(exportPackages.containsKey(key) ? entry : key, entry);
+        }
+    }
+
     private void addEntry(Map<String, String> target, String entry) {
         String key = entry;
         int index = entry.indexOf(";");

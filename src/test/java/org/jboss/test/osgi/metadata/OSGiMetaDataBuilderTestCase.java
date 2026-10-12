@@ -51,4 +51,24 @@ public class OSGiMetaDataBuilderTestCase {
         List<PackageAttribute> exportPackages = metadata.getExportPackages();
         Assert.assertEquals(15, exportPackages.size());
     }
+
+    @Test
+    public void testDuplicateExportPackages() throws Exception {
+
+        OSGiMetaDataBuilder builder = OSGiMetaDataBuilder.createBuilder("duplicate.exports");
+        builder.addExportPackages("org.acme.foo;version=2.0", "org.acme.foo;version=1.7", "org.acme.foo;version=2.0", "org.acme.bar", "org.acme.bar");
+        builder.addImportPackages("org.acme.baz;version=2.0", "org.acme.baz;version=1.7");
+
+        OSGiMetaData metadata = builder.getOSGiMetaData();
+        List<PackageAttribute> exportPackages = metadata.getExportPackages();
+        Assert.assertEquals(3, exportPackages.size());
+        Assert.assertEquals("org.acme.foo", exportPackages.get(0).getAttribute());
+        Assert.assertEquals("2.0", exportPackages.get(0).getAttributeValue("version", String.class));
+        Assert.assertEquals("org.acme.foo", exportPackages.get(1).getAttribute());
+        Assert.assertEquals("1.7", exportPackages.get(1).getAttributeValue("version", String.class));
+        Assert.assertEquals("org.acme.bar", exportPackages.get(2).getAttribute());
+
+        // A package can only be imported once
+        Assert.assertEquals(1, metadata.getImportPackages().size());
+    }
 }
