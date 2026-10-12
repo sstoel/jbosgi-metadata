@@ -138,18 +138,18 @@ public final class OSGiMetaDataBuilder {
         try {
             int manifestVersion = getBundleManifestVersion(metadata);
             if (manifestVersion < 0)
-                throw new BundleException("Cannot determine Bundle-ManifestVersion");
+                throw new BundleException("Cannot determine Bundle-ManifestVersion", BundleException.MANIFEST_ERROR);
             if (manifestVersion > 2)
-                throw new BundleException("Unsupported Bundle-ManifestVersion: " + manifestVersion);
+                throw new BundleException("Unsupported Bundle-ManifestVersion: " + manifestVersion, BundleException.MANIFEST_ERROR);
 
             // R3 Framework
             String symbolicName = metadata.getBundleSymbolicName();
             if (manifestVersion == 1 && symbolicName != null)
-                throw new BundleException("Invalid Bundle-ManifestVersion for: " + symbolicName);
+                throw new BundleException("Invalid Bundle-ManifestVersion for: " + symbolicName, BundleException.MANIFEST_ERROR);
 
             // R4 Framework
             if (manifestVersion == 2 && symbolicName == null)
-                throw new BundleException("Cannot obtain Bundle-SymbolicName");
+                throw new BundleException("Cannot obtain Bundle-SymbolicName", BundleException.MANIFEST_ERROR);
         } catch (RuntimeException ex) {
             // A header that cannot be parsed
             throw new BundleException("Invalid OSGi metadata", BundleException.MANIFEST_ERROR, ex);

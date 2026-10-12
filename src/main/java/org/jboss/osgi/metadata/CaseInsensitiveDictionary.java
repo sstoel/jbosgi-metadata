@@ -27,11 +27,16 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.jboss.osgi.metadata.spi.NotNullException;
 
@@ -73,26 +78,31 @@ public class CaseInsensitiveDictionary extends Hashtable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Enumeration<Object> elements() {
-        return delegate.elements();
+        return Collections.enumeration(values());
     }
 
     @SuppressWarnings("unchecked")
     public synchronized boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (obj == null || obj instanceof Dictionary == false)
+
+        // The other dictionary or map has the same entries, its keys are looked up as they are in here
+        int otherSize;
+        if (obj instanceof Dictionary)
+            otherSize = ((Dictionary) obj).size();
+        else if (obj instanceof Map)
+            otherSize = ((Map) obj).size();
+        else
             return false;
 
-        Dictionary<String, Object> other = (Dictionary) obj;
-
-        if (size() != other.size())
+        if (size() != otherSize)
             return false;
-        if (isEmpty())
-            return true;
 
-        for (String key : originalKeys) {
-            if (get(key).equals(other.get(key)) == false)
+        for (String key : keySet()) {
+            Object other = obj instanceof Dictionary ? ((Dictionary) obj).get(key) : ((Map) obj).get(key);
+            if (get(key).equals(other) == false)
                 return false;
         }
         return true;
@@ -105,7 +115,8 @@ public class CaseInsensitiveDictionary extends Hashtable {
     }
 
     public int hashCode() {
-        return delegate.hashCode();
+        // Like a map that has the keys in their original case
+        return entrySet().hashCode();
     }
 
     public boolean isEmpty() {
@@ -171,6 +182,51 @@ public class CaseInsensitiveDictionary extends Hashtable {
     }
 
     @Override
+    public Object putIfAbsent(Object key, Object value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public boolean replace(Object key, Object oldValue, Object newValue) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public Object replace(Object key, Object value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public void replaceAll(BiFunction function) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public Object computeIfAbsent(Object key, Function mappingFunction) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public Object computeIfPresent(Object key, BiFunction remappingFunction) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public Object compute(Object key, BiFunction remappingFunction) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
+    public Object merge(Object key, Object value, BiFunction remappingFunction) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Override
     public Set<String> keySet() {
         synchronized (originalKeys) {
             return Collections.unmodifiableSet(new LinkedHashSet<String>(originalKeys));
@@ -180,7 +236,11 @@ public class CaseInsensitiveDictionary extends Hashtable {
     @Override
     @SuppressWarnings("unchecked")
     public Collection values() {
-        return Collections.unmodifiableCollection(Collections.list(delegate.elements()));
+        // In the order of the keys
+        List<Object> values = new ArrayList<Object>();
+        for (String key : keySet())
+            values.add(get(key));
+        return Collections.unmodifiableCollection(values);
     }
 
     @Override
@@ -197,6 +257,7 @@ public class CaseInsensitiveDictionary extends Hashtable {
     }
 
     public String toString() {
-        return delegate.toString();
+        // With the keys in their original case
+        return new LinkedHashMap<Object, Object>(this).toString();
     }
 }
