@@ -88,21 +88,20 @@ public class CaseInsensitiveDictionary extends Hashtable {
         if (obj == this)
             return true;
 
-        // The other dictionary or map has the same entries, its keys are looked up as they are in here
-        int otherSize;
-        if (obj instanceof Dictionary)
-            otherSize = ((Dictionary) obj).size();
-        else if (obj instanceof Map)
-            otherSize = ((Map) obj).size();
-        else
+        // A map has the same entries, the keys in their original case as in hashCode (Map.equals)
+        if (obj instanceof Map)
+            return entrySet().equals(((Map) obj).entrySet());
+
+        // Another dictionary has the same entries when its keys, looked up as they are in here, give the same values
+        if (obj instanceof Dictionary == false)
             return false;
 
-        if (size() != otherSize)
+        Dictionary other = (Dictionary) obj;
+        if (size() != other.size())
             return false;
 
         for (String key : keySet()) {
-            Object other = obj instanceof Dictionary ? ((Dictionary) obj).get(key) : ((Map) obj).get(key);
-            if (get(key).equals(other) == false)
+            if (get(key).equals(other.get(key)) == false)
                 return false;
         }
         return true;
