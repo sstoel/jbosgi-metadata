@@ -19,14 +19,15 @@
  */
 package org.jboss.osgi.metadata.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 import org.jboss.osgi.metadata.Parameter;
 
 /**
- * Parameter impl. It uses [Hash]Set to hold the values. So duplicate values (by hash) will be ignored.
+ * Parameter impl. It uses a Set to hold the values. So duplicate values (by hash) will be ignored.
  * 
  * @author <a href="mailto:ales.justin@jboss.com">Ales Justin</a>
  */
@@ -36,7 +37,7 @@ public class AbstractParameter implements Parameter {
     private final ValueCreator<?> vc;
 
     public AbstractParameter(ValueCreator<?> vc) {
-        this.values = new HashSet<String>();
+        this.values = new LinkedHashSet<String>();
         this.vc = vc;
     }
 
@@ -53,9 +54,10 @@ public class AbstractParameter implements Parameter {
     public Object getValue() {
         if (values.isEmpty())
             return null;
-        String result = values.toString();
-        result = result.substring(1, result.length() - 1);
-        return vc.createValue(result);
+        // The values of a parameter that is given more than once, in the order of the header
+        if (isCollection())
+            return Collections.unmodifiableList(new ArrayList<String>(values));
+        return vc.createValue(values.iterator().next());
     }
 
     public boolean isCollection() {
@@ -64,6 +66,6 @@ public class AbstractParameter implements Parameter {
 
     @Override
     public String toString() {
-        return "[" + getValue() + "]";
+        return isCollection() ? values.toString() : "[" + getValue() + "]";
     }
 }
