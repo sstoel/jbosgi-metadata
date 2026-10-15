@@ -420,20 +420,26 @@ public final class OSGiManifestBuilder implements Asset {
         // Bundle manifests written to previous specifications’ manifest syntax are
         // taken to have a bundle manifest version of '1', although there is no way to
         // express this in such manifests.
-        int manifestVersion = getBundleManifestVersion(manifest);
+        int manifestVersion;
+        try {
+            manifestVersion = getBundleManifestVersion(manifest);
+        } catch (NumberFormatException ex) {
+            String value = getManifestHeaderInternal(manifest, Constants.BUNDLE_MANIFESTVERSION);
+            throw new BundleException("Invalid Bundle-ManifestVersion: " + value, BundleException.MANIFEST_ERROR, ex);
+        }
         if (manifestVersion < 0)
-            throw new BundleException("Cannot determine Bundle-ManifestVersion");
+            throw new BundleException("Cannot determine Bundle-ManifestVersion", BundleException.MANIFEST_ERROR);
         if (manifestVersion > 2)
-            throw new BundleException("Unsupported Bundle-ManifestVersion: " + manifestVersion);
+            throw new BundleException("Unsupported Bundle-ManifestVersion: " + manifestVersion, BundleException.MANIFEST_ERROR);
 
         // R3 Framework
         String symbolicName = getManifestHeaderInternal(manifest, Constants.BUNDLE_SYMBOLICNAME);
         if (manifestVersion == 1 && symbolicName != null)
-            throw new BundleException("Invalid Bundle-ManifestVersion for: " + symbolicName);
+            throw new BundleException("Invalid Bundle-ManifestVersion for: " + symbolicName, BundleException.MANIFEST_ERROR);
 
         // R4 Framework
         if (manifestVersion == 2 && symbolicName == null)
-            throw new BundleException("Cannot obtain Bundle-SymbolicName");
+            throw new BundleException("Cannot obtain Bundle-SymbolicName", BundleException.MANIFEST_ERROR);
 
     }
 
