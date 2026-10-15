@@ -119,13 +119,17 @@ public abstract class AbstractOSGiMetaData implements OSGiMetaData {
 
     @Override
     public List<String> getBundleCategory() {
-        return get(BUNDLE_CATEGORY, STRING_LIST_VC);
+        return getTrimmedList(BUNDLE_CATEGORY);
     }
 
     @Override
     public List<String> getBundleClassPath() {
-        // White space around the entries of the bundle class path is not significant
-        List<String> entries = get(BUNDLE_CLASSPATH, STRING_LIST_VC);
+        return getTrimmedList(BUNDLE_CLASSPATH);
+    }
+
+    // White space around the entries of a comma separated header is not significant
+    private List<String> getTrimmedList(String key) {
+        List<String> entries = get(key, STRING_LIST_VC);
         if (entries == null)
             return null;
         List<String> result = new ArrayList<String>(entries.size());
@@ -162,7 +166,7 @@ public abstract class AbstractOSGiMetaData implements OSGiMetaData {
     @Override
     @SuppressWarnings("deprecation")
     public List<String> getRequiredExecutionEnvironment() {
-        return get(BUNDLE_REQUIREDEXECUTIONENVIRONMENT, STRING_LIST_VC);
+        return getTrimmedList(BUNDLE_REQUIREDEXECUTIONENVIRONMENT);
     }
 
     @Override
