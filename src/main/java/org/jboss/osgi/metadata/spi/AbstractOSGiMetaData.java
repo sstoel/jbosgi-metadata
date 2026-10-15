@@ -55,6 +55,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -91,13 +92,22 @@ public abstract class AbstractOSGiMetaData implements OSGiMetaData {
 
     protected abstract String getMainAttribute(String key);
 
+    /**
+     * The headers by their name. Metadata that is not backed by manifest attributes overrides it.
+     */
+    protected Map<String, String> getHeaderMap() {
+        Map<String, String> result = new LinkedHashMap<String, String>();
+        for (Entry<Name, String> entry : getMainAttributes().entrySet())
+            result.put(entry.getKey().toString(), entry.getValue());
+        return result;
+    }
+
     @Override
     @SuppressWarnings({ "unchecked" })
     public Dictionary<String, String> getHeaders() {
-        Map<Name, String> attributes = getMainAttributes();
         Dictionary<String, String> result = new Hashtable<String, String>();
-        for (Entry<Name, String> entry : attributes.entrySet())
-            result.put(entry.getKey().toString(), entry.getValue());
+        for (Entry<String, String> entry : getHeaderMap().entrySet())
+            result.put(entry.getKey(), entry.getValue());
 
         return new CaseInsensitiveDictionary(result);
     }

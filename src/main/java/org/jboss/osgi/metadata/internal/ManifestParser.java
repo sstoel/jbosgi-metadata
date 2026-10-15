@@ -94,7 +94,7 @@ public class ManifestParser {
             // Collect the paths they should be first
             List<String> paths = new ArrayList<String>();
             for (String piece : pieces) {
-                if (piece.indexOf('=') >= 0)
+                if (indexOfUnquoted(piece, '=') >= 0)
                     break;
                 paths.add(unquote(piece));
             }
@@ -106,10 +106,11 @@ public class ManifestParser {
 
             for (int i = paths.size(); i < pieces.size(); ++i) {
                 String piece = pieces.get(i);
-                int seperator = piece.indexOf(":=");
-                if (seperator >= 0) {
-                    String name = piece.substring(0, seperator);
-                    String value = piece.substring(seperator + 2);
+                // The name ends at the first '=' outside a quoted string, a directive when it is preceded by ':'
+                int seperator = indexOfUnquoted(piece, '=');
+                if (seperator > 0 && piece.charAt(seperator - 1) == ':') {
+                    String name = piece.substring(0, seperator - 1);
+                    String value = piece.substring(seperator + 1);
                     if (directives == null)
                         directives = new LinkedHashMap<String, Parameter>();
                     name = unquote(name.trim());
@@ -118,7 +119,6 @@ public class ManifestParser {
                     value = unquote(value.trim());
                     directives.put(name, new AbstractParameter(ValueCreatorUtil.STRING_VC, value));
                 } else {
-                    seperator = piece.indexOf("=");
                     if (seperator >= 0) {
                         String name = piece.substring(0, seperator);
                         String value = piece.substring(seperator + 1);
@@ -131,7 +131,10 @@ public class ManifestParser {
                             String type = name.substring(seperator + 1).trim();
                             if (type.startsWith("List")) {
                                 int index = type.indexOf('<');
-                                String subtype = index > 0 ? type.substring(index + 1, type.indexOf('>')) : "String";
+                                int endIndex = type.indexOf('>');
+                                if (index > 0 && endIndex < index)
+                                    throw new IllegalArgumentException("Invalid attribute type: " + type);
+                                String subtype = index > 0 ? type.substring(index + 1, endIndex) : "String";
                                 type = "List<" + subtype.trim() + ">";
                             }
                             vc = ValueCreatorUtil.forType(type);
@@ -175,11 +178,48 @@ public class ManifestParser {
     private static String unquote(String string) {
         if (string.length() < 2)
             return string;
-        if (string.charAt(0) == '\"' && string.charAt(string.length() - 1) == '\"')
-            return string.substring(1, string.length() - 1);
-        if (string.charAt(0) == '\'' && string.charAt(string.length() - 1) == '\'')
-            return string.substring(1, string.length() - 1);
+        char quote = string.charAt(0);
+        if ((quote == '\"' || quote == '\'') && string.charAt(string.length() - 1) == quote)
+            return unescape(string.substring(1, string.length() - 1));
         return string;
+    }
+
+    /**
+     * Resolve the escapes of a quoted string: a backslash followed by a quote or a backslash (1.3.2)
+     */
+    private static String unescape(String string) {
+        if (string.indexOf('\\') < 0)
+            return string;
+        StringBuilder result = new StringBuilder(string.length());
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
+            if (c == '\\' && i + 1 < string.length()) {
+                char next = string.charAt(i + 1);
+                if (next == '\\' || next == '"' || next == '\'') {
+                    result.append(next);
+                    i++;
+                    continue;
+                }
+            }
+            result.append(c);
+        }
+        return result.toString();
+    }
+
+    private static int indexOfUnquoted(String string, char search) {
+        char quote = 0;
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
+            if (c == '\\' && quote != 0)
+                i++;
+            else if (quote != 0)
+                quote = c == quote ? 0 : quote;
+            else if (c == '"' || c == '\'')
+                quote = c;
+            else if (c == search)
+                return i;
+        }
+        return -1;
     }
 
 }

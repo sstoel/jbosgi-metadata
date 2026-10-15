@@ -39,7 +39,7 @@ class DoubleListValueCreator extends ListValueCreator<Double> {
         List<String> parts = ElementParser.parseDelimitedString(attribute, ',');
         Double[] result = new Double[parts.size()];
         for (int i = 0; i < parts.size(); i++) {
-            result[i] = Double.valueOf(parts.get(i));
+            result[i] = Double.valueOf(parts.get(i).trim());
         }
         return Arrays.asList(result);
     }

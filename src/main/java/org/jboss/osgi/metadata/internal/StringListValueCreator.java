@@ -31,21 +31,52 @@ import org.jboss.osgi.metadata.spi.ElementParser;
  */
 class StringListValueCreator extends ListValueCreator<String> {
 
+    // The value of a List<String> attribute, a backslash escapes a comma or a backslash of an element (3.2.4)
+    private final boolean listEscapes;
+
     public StringListValueCreator() {
         super();
+        this.listEscapes = false;
     }
 
     public StringListValueCreator(boolean trim) {
         super(trim);
+        this.listEscapes = false;
+    }
+
+    StringListValueCreator(boolean trim, boolean listEscapes) {
+        super(trim);
+        this.listEscapes = listEscapes;
     }
 
     public List<String> useString(String attribute) {
+        if (listEscapes)
+            return splitEscapedList(attribute);
         List<String> parts = ElementParser.parseDelimitedString(attribute, ',', false);
         List<String> result = new ArrayList<String>(parts.size());
         StringValueCreator valueCreator = new StringValueCreator();
         for (String part : parts) {
             result.add(valueCreator.createValue(part));
         }
+        return result;
+    }
+
+    // Split at the commas that are not escaped, then resolve the escapes of each element
+    private static List<String> splitEscapedList(String value) {
+        List<String> result = new ArrayList<String>();
+        StringBuilder element = new StringBuilder();
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\\' && i + 1 < value.length()) {
+                element.append(value.charAt(++i));
+            } else if (c == ',') {
+                result.add(element.toString());
+                element.setLength(0);
+            } else {
+                element.append(c);
+            }
+        }
+        result.add(element.toString());
         return result;
     }
 }

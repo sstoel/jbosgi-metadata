@@ -30,9 +30,9 @@ import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -50,8 +50,8 @@ import org.jboss.osgi.metadata.spi.NotNullException;
 public class CaseInsensitiveDictionary extends Hashtable {
     private static final long serialVersionUID = 5802491129524016545L;
 
-    /** The delegate dictionary */
-    private Dictionary<String, Object> delegate;
+    /** The entries, keys compare like String.equalsIgnoreCase as in the filter implementation */
+    private Map<String, Object> delegate;
 
     /** The original keys */
     private Set<String> originalKeys;
@@ -65,7 +65,7 @@ public class CaseInsensitiveDictionary extends Hashtable {
     public CaseInsensitiveDictionary(Dictionary delegate) {
         NotNullException.assertValue(delegate, "delegate");
 
-        this.delegate = new Hashtable<String, Object>(delegate.size());
+        this.delegate = Collections.synchronizedMap(new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER));
         this.originalKeys = Collections.synchronizedSet(new HashSet<String>());
         Enumeration<String> e = delegate.keys();
         while (e.hasMoreElements()) {
@@ -73,7 +73,7 @@ public class CaseInsensitiveDictionary extends Hashtable {
             if (get(key) != null)
                 throw new IllegalArgumentException("Duplicates with varying case for key [" + key + "] : " + delegate);
 
-            this.delegate.put(key.toLowerCase(Locale.ENGLISH), delegate.get(key));
+            this.delegate.put(key, delegate.get(key));
             originalKeys.add(key);
         }
     }
@@ -108,8 +108,8 @@ public class CaseInsensitiveDictionary extends Hashtable {
     }
 
     public Object get(Object key) {
-        if (key instanceof String)
-            key = ((String) key).toLowerCase(Locale.ENGLISH);
+        if (key instanceof String == false)
+            return null;
         return delegate.get(key);
     }
 
@@ -149,10 +149,11 @@ public class CaseInsensitiveDictionary extends Hashtable {
 
     @Override
     public boolean contains(Object value) {
-        Enumeration<Object> e = delegate.elements();
-        while (e.hasMoreElements()) {
-            if (e.nextElement().equals(value))
-                return true;
+        synchronized (delegate) {
+            for (Object aux : delegate.values()) {
+                if (aux.equals(value))
+                    return true;
+            }
         }
         return false;
     }

@@ -29,13 +29,14 @@ package org.jboss.osgi.metadata.internal;
 public class ValueCreatorUtil {
     public static StringValueCreator STRING_VC = new StringValueCreator();
     public static IntegerValueCreator INTEGER_VC = new IntegerValueCreator();
-    public static LongValueCreator LONG_VC = new LongValueCreator();
-    public static DoubleValueCreator DOUBLE_VC = new DoubleValueCreator();
+    public static LongValueCreator LONG_VC = new LongValueCreator(true);
+    public static DoubleValueCreator DOUBLE_VC = new DoubleValueCreator(true);
     public static BooleanValueCreator BOOLEAN_VC = new BooleanValueCreator();
     public static VersionValueCreator VERSION_VC = new VersionValueCreator();
     public static VersionRangeValueCreator VERSION_RANGE_VC = new VersionRangeValueCreator();
     public static URLValueCreator URL_VC = new URLValueCreator();
     public static StringListValueCreator STRING_LIST_VC = new StringListValueCreator();
+    static StringListValueCreator TYPED_STRING_LIST_VC = new StringListValueCreator(false, true);
     public static VersionListValueCreator VERSION_LIST_VC = new VersionListValueCreator();
     public static LongListValueCreator LONG_LIST_VC = new LongListValueCreator();
     public static DoubleListValueCreator DOUBLE_LIST_VC = new DoubleListValueCreator();
@@ -45,9 +46,16 @@ public class ValueCreatorUtil {
     public static PackageAttributeListValueCreator PACKAGE_LIST_VC = new PackageAttributeListValueCreator();
     public static ActivationPolicyMDValueCreator ACTIVATION_POLICY_VC = new ActivationPolicyMDValueCreator();
 
+    /**
+     * The value creator of a typed attribute
+     *
+     * @throws IllegalArgumentException for a type that is not String, Version, Long, Double or a List of these
+     */
     public static ValueCreator<?> forType(String type) {
-        ValueCreator<?> result = STRING_VC;
-        if ("Version".equals(type)) {
+        ValueCreator<?> result;
+        if ("String".equals(type)) {
+            result = STRING_VC;
+        } else if ("Version".equals(type)) {
             result = VERSION_VC;
         } else if ("Long".equals(type)) {
             result = LONG_VC;
@@ -60,7 +68,9 @@ public class ValueCreatorUtil {
         } else if ("List<Double>".equals(type)) {
             result = DOUBLE_LIST_VC;
         } else if ("List<String>".equals(type)) {
-            result = STRING_LIST_VC;
+            result = TYPED_STRING_LIST_VC;
+        } else {
+            throw new IllegalArgumentException("Invalid attribute type: " + type);
         }
         return result;
     }

@@ -39,7 +39,7 @@ class LongListValueCreator extends ListValueCreator<Long> {
         List<String> parts = ElementParser.parseDelimitedString(attribute, ',');
         Long[] result = new Long[parts.size()];
         for (int i = 0; i < parts.size(); i++) {
-            result[i] = Long.valueOf(parts.get(i));
+            result[i] = Long.valueOf(parts.get(i).trim());
         }
         return Arrays.asList(result);
     }

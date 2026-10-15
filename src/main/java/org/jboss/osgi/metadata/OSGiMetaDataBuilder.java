@@ -97,6 +97,14 @@ public final class OSGiMetaDataBuilder {
         return load(manifest);
     }
 
+    /**
+     * The metadata of the given headers; unlike the headers of a manifest their names need not be JAR attribute names
+     */
+    public static OSGiMetaData load(Map<String, String> headers) {
+        NotNullException.assertValue(headers, "headers");
+        return new HeadersMetaDataInternal(headers);
+    }
+
     public static OSGiMetaData load(Manifest manifest) {
         NotNullException.assertValue(manifest, "manifest");
         return new ManifestMetaDataInternal(manifest);
@@ -309,7 +317,8 @@ public final class OSGiMetaDataBuilder {
             StringBuffer versionpart = new StringBuffer();
             convertExecutionEnvironmentHeader(envspec, namepart, versionpart);
 
-            String specpart = "(osgi.ee=" + namepart + ")";
+            // The name is a filter value, the characters of the filter syntax are escaped
+            String specpart = "(osgi.ee=" + escapeFilterValue(namepart.toString()) + ")";
             if (versionpart.length() > 0) {
                 specpart = "(&" + specpart + "(version=" + versionpart + "))";
             }
@@ -331,6 +340,17 @@ public final class OSGiMetaDataBuilder {
         } catch (InvalidSyntaxException ex) {
             throw new IllegalArgumentException("Cannot parse required execution environment: " + envspecs, ex);
         }
+    }
+
+    private static String escapeFilterValue(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\\' || c == '(' || c == ')' || c == '*')
+                result.append('\\');
+            result.append(c);
+        }
+        return result.toString();
     }
 
     /**

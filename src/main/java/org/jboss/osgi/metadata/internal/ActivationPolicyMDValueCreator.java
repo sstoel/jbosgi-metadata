@@ -65,11 +65,14 @@ class ActivationPolicyMDValueCreator extends AbstractValueCreator<ActivationPoli
     }
 
     private List<String> getPackageList(String prefix, String directive) {
-        directive = directive.substring(prefix.length());
-        if (directive.startsWith("\"") && directive.endsWith("\""))
+        directive = directive.substring(prefix.length()).trim();
+        // A single quote character is not a quoted string
+        if (directive.length() > 1 && directive.startsWith("\"") && directive.endsWith("\""))
             directive = directive.substring(1, directive.length() - 1);
-        if (directive.startsWith("'") && directive.endsWith("'"))
+        else if (directive.length() > 1 && directive.startsWith("'") && directive.endsWith("'"))
             directive = directive.substring(1, directive.length() - 1);
+        else if (directive.startsWith("\"") || directive.startsWith("'"))
+            throw new IllegalArgumentException("Unterminated quoted string in: " + prefix + directive);
 
         List<String> result = new ArrayList<String>();
         for (String packname : directive.split(","))
