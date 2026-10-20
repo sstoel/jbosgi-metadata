@@ -157,6 +157,11 @@ public class ManifestParser {
                 }
             }
 
+            // The paths of a Bundle-NativeCode clause share the attributes of the clause, which tell the clauses apart:
+            // a clause without parameters gets attributes of its own too (3.10)
+            if (allowDuplicateAttributes && attributes == null)
+                attributes = new LinkedHashMap<String, Parameter>();
+
             for (String path : paths) {
                 ParameterizedAttribute metadata = null;
                 if (packages)
